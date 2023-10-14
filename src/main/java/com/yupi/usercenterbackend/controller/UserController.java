@@ -1,7 +1,6 @@
 package com.yupi.usercenterbackend.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.sun.prism.impl.BaseResourcePool;
 import com.yupi.usercenterbackend.common.BaseResponse;
 import com.yupi.usercenterbackend.common.ErrorCode;
 import com.yupi.usercenterbackend.common.ResultUtils;
@@ -131,4 +130,6 @@ public class UserController {
         userService.userLogout(request);
         return ResultUtils.success(1);
     }
+
+
 }

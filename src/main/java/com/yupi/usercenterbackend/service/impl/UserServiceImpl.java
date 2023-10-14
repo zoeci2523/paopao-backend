@@ -1,8 +1,9 @@
 package com.yupi.usercenterbackend.service.impl;
-import java.util.Date;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.yupi.usercenterbackend.common.ErrorCode;
 import com.yupi.usercenterbackend.exception.BusinessException;
 import com.yupi.usercenterbackend.model.User;
@@ -11,16 +12,16 @@ import com.yupi.usercenterbackend.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
-import javax.net.ssl.HttpsURLConnection;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.yupi.usercenterbackend.constants.UserConstants.USER_LGGIN_STATE;
 
@@ -156,6 +157,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         cleanUser.setUserRole(user.getUserRole());
         cleanUser.setUserStatus(user.getUserStatus());
         cleanUser.setCreateTime(user.getCreateTime());
+        cleanUser.setTags(user.getTags());
         return cleanUser;
     }
 
@@ -168,6 +170,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public int userLogout(HttpServletRequest request){
         request.getSession().removeAttribute(USER_LGGIN_STATE);
         return 1;
+    }
+
+    /**
+     * 根据标签搜索用户
+     * @param tagNameList
+     * @return
+     */
+    @Override
+    public List<User> searchUsersByTags(List<String> tagNameList){
+        // 判空
+        if (CollectionUtils.isEmpty(tagNameList)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 方法1：SQL查询，拼接 and 查询
+        QueryWrapper<User> queryWrapper = new QueryWrapper();
+//        for (String tagName: tagNameList) {
+//            queryWrapper = queryWrapper.like("tags",tagName);
+//        }
+//        List<User> userList = userMapper.selectList(queryWrapper);
+//        return userList.stream().map(this::getCleanUser).collect(Collectors.toList());
+
+        // 方法2：内存查询
+        // 2.1 先查询出所有用户
+        List<User> userList = userMapper.selectList(queryWrapper);
+        Gson gson = new Gson();
+        // 2.2 在内存中根据标签筛选用户
+        return userList.stream().filter(user -> {
+            String tagsStr = user.getTags();
+            // 小技巧：gson list 转换使用 TypeToken
+            Set<String> tempTagNameSet = gson.fromJson(tagsStr, new TypeToken<Set<String>>(){}.getType());
+            // 需要判空，因为用户不一定有tags
+            tempTagNameSet = Optional.ofNullable(tempTagNameSet).orElse(new HashSet<>());
+            for (String tagName : tagNameList) {
+                if (!tempTagNameSet.contains(tagName)) return false;
+            }
+            return true;
+        }).map(this:: getCleanUser).collect(Collectors.toList());
     }
 
 }
