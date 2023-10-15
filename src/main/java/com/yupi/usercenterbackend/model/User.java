@@ -28,6 +28,8 @@ public class User implements Serializable {
 
     private String email;
 
+    private String profile;
+
     private Integer userStatus;
 
     private Date createTime;

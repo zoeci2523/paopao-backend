@@ -1,4 +1,7 @@
 spring:
+  # 默认环境dev，在spring启动时会提示
+  profiles:
+    active: dev
   application:
     name: user-center
   datasource:
@@ -23,6 +26,9 @@ server:
   port: 8080
   servlet:
     context-path: /api
+    session:
+      cookie:
+        domain: localhost
 
 mybatis-plus:
   configuration:

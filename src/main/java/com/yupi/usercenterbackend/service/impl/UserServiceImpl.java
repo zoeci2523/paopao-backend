@@ -23,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.yupi.usercenterbackend.constants.UserConstants.ADMIN_ROLE;
 import static com.yupi.usercenterbackend.constants.UserConstants.USER_LGGIN_STATE;
 
 /**
@@ -153,6 +154,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         cleanUser.setGender(user.getGender());
         cleanUser.setPhone(user.getPhone());
         cleanUser.setEmail(user.getEmail());
+        cleanUser.setProfile(user.getProfile());
         cleanUser.setPlanetCode(user.getPlanetCode());
         cleanUser.setUserRole(user.getUserRole());
         cleanUser.setUserStatus(user.getUserStatus());
@@ -160,7 +162,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         cleanUser.setTags(user.getTags());
         return cleanUser;
     }
-
 
     /**
      * 登出
@@ -209,6 +210,67 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }).map(this:: getCleanUser).collect(Collectors.toList());
     }
 
+    @Override
+    public int updateUser(User user, User loginUser){
+        Long userId = user.getId();
+        if (userId <= 0){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 补充校验其他信息是否为空，如果用户仅传递id不传其他信息，直接报错，不需要执行update语句
+        // 将允许修改的字段全部拿出来，判断是否全为空
+        String userName = user.getUsername();
+        String avatarUrl = user.getAvatarUrl();
+        Integer gender = user.getGender();
+        String phone = user.getPhone();
+        String email = user.getEmail();
+        if (StringUtils.isAllEmpty(userName, avatarUrl, phone, email) && gender == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        // 如果是管理员，允许更新任意用户
+        // 如果不是管理员，仅允许更新自己信息
+        if (!isAdmin(loginUser) && userId != loginUser.getId()){
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+
+        User oldUser = userMapper.selectById(userId);
+        if (oldUser == null){
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        return userMapper.updateById(user);
+    }
+
+    @Override
+    public User getLoginUser(HttpServletRequest request){
+        if (request == null){
+            return null;
+        }
+        Object userObj = request.getSession().getAttribute(USER_LGGIN_STATE);
+        if (userObj == null){
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        return (User) userObj;
+    }
+
+    /**
+     * 是否为管理员
+     * @param request
+     * @return
+     */
+    @Override
+    public boolean isAdmin(HttpServletRequest request) {
+        Object userObj = request.getSession().getAttribute(USER_LGGIN_STATE);
+        User user = (User) userObj;
+        if (user == null || user.getUserRole() != ADMIN_ROLE) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean isAdmin(User loginUser) {
+        return loginUser == null || loginUser.getUserRole() != ADMIN_ROLE;
+    }
 }
 
 
