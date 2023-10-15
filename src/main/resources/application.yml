@@ -1,4 +1,7 @@
 spring:
+  # 默认环境dev，在spring启动时会提示
+  profiles:
+    active: dev
   application:
     name: user-center
   datasource:
@@ -23,11 +26,16 @@ server:
   port: 8080
   servlet:
     context-path: /api
+    session:
+      cookie:
+        domain: localhost
 
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
     #要加入BaseMapper才不会将camelcase换成underscore，否则字段匹配失败
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #开启输出sql日志
 
   #自动实现逻辑删除，不返回被逻辑删除的数据
   global-config:

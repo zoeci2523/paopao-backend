@@ -4,6 +4,7 @@ import com.yupi.usercenterbackend.model.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
 * @author fengxiaoha
@@ -19,4 +20,14 @@ public interface UserService extends IService<User> {
     User getCleanUser(User user);
 
     int userLogout(HttpServletRequest request);
+
+    List<User> searchUsersByTags(List<String> tagNameList);
+
+    int updateUser(User user, User loginUser);
+
+    User getLoginUser(HttpServletRequest request);
+
+    boolean isAdmin(HttpServletRequest request);
+
+    boolean isAdmin(User loginUser);
 }

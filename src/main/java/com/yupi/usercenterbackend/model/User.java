@@ -28,6 +28,8 @@ public class User implements Serializable {
 
     private String email;
 
+    private String profile;
+
     private Integer userStatus;
 
     private Date createTime;
@@ -41,9 +43,8 @@ public class User implements Serializable {
 
     private String planetCode;
 
-
     /**
-     * 标签列表
+     * 标签列表 json
      */
     private String tags;
 
